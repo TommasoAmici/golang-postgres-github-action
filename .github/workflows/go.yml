@@ -1,0 +1,54 @@
+name: Go
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  test:
+    name: test
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+
+    steps:
+      - name: Set up Go 1.x
+        uses: actions/setup-go@v2
+        with:
+          go-version: ^1.13
+        id: go
+
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v2
+
+      - name: Get dependencies
+        run: |
+          go get -v -t -d ./...
+          if [ -f Gopkg.toml ]; then
+              curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
+              dep ensure
+          fi
+
+      - name: Set up test database
+        run: |
+          psql -h localhost postgres -c "DROP DATABASE IF EXISTS test_golang" -c "DROP USER IF EXISTS test_golang"
+          psql -h localhost postgres -c "CREATE USER test_golang CREATEDB PASSWORD 'test_golang'"
+          psql -h localhost postgres -c "CREATE DATABASE test_golang OWNER test_golang"
+          export PGPASSWORD=test_golang
+          psql -h postgres test_golang -U test_golang -a -f ./db/init.sql
+
+      - name: Run tests
+        run: go test -cover ./...
