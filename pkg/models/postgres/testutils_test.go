@@ -21,9 +21,9 @@ func newTestDB(t *testing.T) (*pgxpool.Pool, func()) {
 	stmtDropTable := "DROP TABLE users;"
 	stmtCreateTable := "CREATE TABLE IF NOT EXISTS users (id SERIAL PRIMARY KEY, username VARCHAR(128));"
 	stmtInsert := "INSERT INTO users (username) VALUES ('User name');"
-	_, _ := pool.Exec(context.Background(), stmtDropTable)
-	_, _ := pool.Exec(context.Background(), stmtCreateTable)
-	_, _ := pool.Exec(context.Background(), stmtInsert)
+	_, _ = pool.Exec(context.Background(), stmtDropTable)
+	_, _ = pool.Exec(context.Background(), stmtCreateTable)
+	_, _ = pool.Exec(context.Background(), stmtInsert)
 
 	return pool, func() {
 		pool.Close()
