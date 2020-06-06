@@ -23,6 +23,8 @@ jobs:
         ports:
           - 5432:5432
         options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+        volumes:
+          - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
 
     steps:
       - name: Set up Go 1.x
@@ -41,19 +43,6 @@ jobs:
               curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
               dep ensure
           fi
-      - name: Create test database
-        env:
-          PGPASSWORD: postgres
-        run: |
-          psql -h localhost postgres -c "DROP DATABASE IF EXISTS test_golang" -c "DROP USER IF EXISTS test_golang"
-          psql -h localhost postgres -c "CREATE USER test_golang CREATEDB PASSWORD 'test_golang'"
-          psql -h localhost postgres -c "CREATE DATABASE test_golang OWNER test_golang"
-
-      - name: Set up test database
-        env:
-          PGPASSWORD: test_golang
-        run: |
-          psql -h postgres test_golang -U test_golang -a -f ./db/init.sql
 
       - name: Run tests
         run: go test -cover ./...
